@@ -205,7 +205,7 @@ impl<T> OpenGLApp<T> {
 impl<T> OpenGLApp<T> {
     #[inline]
     fn poll_client_rect(&self, data: &mut AppData<T>) -> (u32, u32) {
-        let mut client_rect = (data.client_rect.0, data.client_rect.1);
+        let mut client_rect = data.client_rect;
         static INIT: std::sync::Once = std::sync::Once::new();        
         INIT.call_once(|| {
             client_rect = self.get_client_rect();
