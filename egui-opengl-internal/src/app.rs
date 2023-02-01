@@ -176,7 +176,7 @@ impl<T> OpenGLApp<T> {
             }
 
             if output.shapes.is_empty() {
-                println!("Output shapes empty");
+                wglMakeCurrent(hdc, o_context).unwrap();
                 return;
             }
 
