@@ -1,0 +1,173 @@
+use detour::static_detour;
+use egui::{
+    Context, Key, Modifiers, RichText, 
+    ScrollArea, Slider, Widget, Color32
+};
+use egui_opengl_internal::OpenGLApp;
+use std::{
+    intrinsics::transmute,
+    sync::{Once},
+};
+use std::ffi::{CString};
+use winapi::um::{
+    libloaderapi::{GetModuleHandleA, GetProcAddress},
+    consoleapi::{AllocConsole},
+    wingdi::{wglGetProcAddress}
+};
+use windows::{    
+    core::{HRESULT},
+    Win32::{
+        Foundation::{HWND, LPARAM, LRESULT, WPARAM},
+        Graphics::Gdi::{HDC, WindowFromDC},
+        UI::WindowsAndMessaging::{CallWindowProcW, SetWindowLongPtrA, GWLP_WNDPROC, WNDPROC},
+    },
+};
+
+#[no_mangle]
+extern "stdcall" fn DllMain(hinst: usize, reason: u32) -> i32 {
+    if reason == 1 {
+        std::thread::spawn(move || unsafe { main_thread(hinst) });
+    }
+
+    1
+}
+
+static mut APP: OpenGLApp<i32> = OpenGLApp::new();
+static mut OLD_WND_PROC: Option<WNDPROC> = None;
+
+type FnWglSwapBuffers = unsafe extern "stdcall" fn(HDC) -> HRESULT;
+static_detour! {
+    static WglSwapBuffersHook: unsafe extern "stdcall" fn(HDC) -> HRESULT;
+}
+
+fn hk_wgl_swap_buffers(hdc: HDC) -> HRESULT {
+    unsafe {
+        static INIT: Once = Once::new();
+        INIT.call_once(|| {
+            println!("wglSwapBuffers successfully hooked.");
+
+            let window = WindowFromDC(hdc);
+            APP.init_default(hdc, window, ui);
+
+            OLD_WND_PROC = Some(transmute(SetWindowLongPtrA(
+                window,
+                GWLP_WNDPROC,
+                hk_wnd_proc as usize as _,
+            )));
+        });
+
+        APP.render(hdc);
+        WglSwapBuffersHook.call(hdc)
+    }
+}
+
+unsafe extern "stdcall" fn hk_wnd_proc(
+    hwnd: HWND,
+    msg: u32,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
+    static INIT: Once = Once::new();
+    INIT.call_once(|| {
+        println!("CallWindowProcW successfully hooked.");
+    });
+
+    let egui_wants_input = APP.wnd_proc(msg, wparam, lparam);
+    if egui_wants_input {
+        return LRESULT(1);
+    }
+
+    CallWindowProcW(OLD_WND_PROC.unwrap(), hwnd, msg, wparam, lparam)
+}
+
+fn ui(ctx: &Context, _: &mut i32) {
+    unsafe {
+        // You should not use statics like this, it's made
+        // this way for the sake of example.
+        static mut UI_CHECK: bool = true;
+        static mut TEXT: Option<String> = None;
+        static mut VALUE: f32 = 0.;
+        static mut COLOR: [f32; 3] = [0., 0., 0.];
+        static ONCE: Once = Once::new();
+
+        ONCE.call_once(|| {
+        });
+
+        if TEXT.is_none() {
+            TEXT = Some(String::from("Test"));
+        }
+
+        egui::containers::Window::new("Main menu").show(ctx, |ui| {
+            ui.label(RichText::new("Test").color(Color32::LIGHT_BLUE));
+            ui.label(RichText::new("Other").color(Color32::WHITE));
+            ui.separator();
+
+            let input = ctx.input().pointer.clone();
+            ui.label(format!(
+                "X1: {} X2: {}",
+                input.button_down(egui::PointerButton::Extra1),
+                input.button_down(egui::PointerButton::Extra2)
+            ));
+
+            let mods = ui.input().modifiers;
+            ui.label(format!(
+                "Ctrl: {} Shift: {} Alt: {}",
+                mods.ctrl, mods.shift, mods.alt
+            ));
+
+            if ui.input().modifiers.matches(Modifiers::CTRL) && ui.input().key_pressed(Key::R) {
+                println!("Pressed");
+            }
+
+            ui.checkbox(&mut UI_CHECK, "Some checkbox");
+            ui.text_edit_singleline(TEXT.as_mut().unwrap());
+            ScrollArea::vertical().max_height(200.).show(ui, |ui| {
+                for i in 1..=100 {
+                    ui.label(format!("Label: {}", i));
+                }
+            });
+
+            Slider::new(&mut VALUE, -1.0..=1.0).ui(ui);
+
+            ui.color_edit_button_rgb(&mut COLOR);
+
+            ui.label(format!(
+                "{:?}",
+                &ui.input().pointer.button_down(egui::PointerButton::Primary)
+            ));
+        });
+    }
+}
+
+pub unsafe fn get_proc_address(function_name: &str) -> *const usize {
+    let o = CString::new("opengl32.dll").unwrap();
+    let opengl32 = GetModuleHandleA(o.as_ptr());           
+    let c = CString::new(function_name).unwrap();
+    let process_address = GetProcAddress(opengl32, c.as_ptr());
+
+    if process_address as isize > 0 {
+        return process_address as *const usize;
+    }
+
+    let c_proc_name = CString::new(function_name).unwrap();
+    let process_address = wglGetProcAddress(c_proc_name.as_ptr());
+    process_address as *const usize
+}
+
+unsafe fn main_thread(_hinst: usize) {
+    unsafe { AllocConsole() };
+
+    let wgl_swap_buffers = get_proc_address("wglSwapBuffers");
+    let fn_wgl_swap_buffers: FnWglSwapBuffers = std::mem::transmute(wgl_swap_buffers);
+
+    println!("wglSwapBuffers: {:X}", wgl_swap_buffers as usize);
+
+    WglSwapBuffersHook
+        .initialize(fn_wgl_swap_buffers, hk_wgl_swap_buffers)
+        .unwrap()
+        .enable()
+        .unwrap();
+
+    #[allow(clippy::empty_loop)]
+    loop {}
+}
