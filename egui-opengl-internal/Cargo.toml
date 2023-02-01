@@ -2,7 +2,7 @@
 name = "egui-opengl-internal"
 version = "0.1.0"
 edition = "2021"
-authors = ["floob, cohaereo"]
+authors = ["floob, sy1ntexx, unknowntrojan, cohaereo"]
 description = "opengl backend for egui library."
 license = "MIT"
 
