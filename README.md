@@ -7,4 +7,4 @@ Currently few features from egui are missing.
 Example dll is contained in `example-wnd` folder. It uses opengl32.
 
 # Example
-![](media/demo.png)
+![](media/demo.gif)
