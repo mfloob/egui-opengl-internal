@@ -34,10 +34,13 @@ spin-lock = ["dep:spin"]
 parking-lot = ["dep:parking_lot"]
 
 [dependencies.windows]
-version = "0.36"
+version = "0.44"
 features = [
     "Win32_UI_Input_KeyboardAndMouse",
     "Win32_System_WindowsProgramming",
+    "Win32_System_SystemServices",
     "Win32_UI_WindowsAndMessaging",
-    "Win32_Foundation"
+    "Win32_Foundation",
+    "Win32_Graphics_OpenGL",
+
 ]

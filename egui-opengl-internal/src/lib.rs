@@ -19,13 +19,6 @@ macro_rules! panic_msg {
     };
 }
 
-/// Creates zero terminated string.
-macro_rules! pc_str {
-    ($cstr:expr) => {
-        windows::core::PCSTR(concat!($cstr, "\x00").as_ptr() as _)
-    };
-}
-
 #[cfg(all(feature = "parking-lot", feature = "spin-lock"))]
 compile_error!("Only one of features `parking-lot`, `spin-lock` must be enabled.");
 
@@ -38,4 +31,4 @@ pub use app::OpenGLApp;
 mod input;
 mod painter;
 mod shader;
-mod utils;
+pub mod utils;

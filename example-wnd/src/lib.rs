@@ -3,16 +3,10 @@ use egui::{
     Context, Key, Modifiers, RichText, 
     ScrollArea, Slider, Widget, Color32
 };
-use egui_opengl_internal::OpenGLApp;
+use egui_opengl_internal::{OpenGLApp, utils};
 use std::{
     intrinsics::transmute,
     sync::{Once},
-};
-use std::ffi::{CString};
-use winapi::um::{
-    libloaderapi::{GetModuleHandleA, GetProcAddress},
-    consoleapi::{AllocConsole},
-    wingdi::{wglGetProcAddress}
 };
 use windows::{    
     core::{HRESULT},
@@ -139,25 +133,10 @@ fn ui(ctx: &Context, _: &mut i32) {
     }
 }
 
-pub unsafe fn get_proc_address(function_name: &str) -> *const usize {
-    let o = CString::new("opengl32.dll").unwrap();
-    let opengl32 = GetModuleHandleA(o.as_ptr());           
-    let c = CString::new(function_name).unwrap();
-    let process_address = GetProcAddress(opengl32, c.as_ptr());
-
-    if process_address as isize > 0 {
-        return process_address as *const usize;
-    }
-
-    let c_proc_name = CString::new(function_name).unwrap();
-    let process_address = wglGetProcAddress(c_proc_name.as_ptr());
-    process_address as *const usize
-}
-
 unsafe fn main_thread(_hinst: usize) {
-    unsafe { AllocConsole() };
+    utils::alloc_console();
 
-    let wgl_swap_buffers = get_proc_address("wglSwapBuffers");
+    let wgl_swap_buffers = utils::get_proc_address("wglSwapBuffers");
     let fn_wgl_swap_buffers: FnWglSwapBuffers = std::mem::transmute(wgl_swap_buffers);
 
     println!("wglSwapBuffers: {:X}", wgl_swap_buffers as usize);

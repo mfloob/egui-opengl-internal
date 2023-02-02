@@ -7,7 +7,6 @@ use clipboard::{windows_clipboard::WindowsClipboardContext, ClipboardProvider};
 use egui::{Context};
 use once_cell::sync::OnceCell;
 use std::{ops::DerefMut};
-
 use windows::{
     Win32::{
         Foundation::{HWND, LPARAM, RECT, WPARAM},
@@ -237,7 +236,7 @@ impl<T> OpenGLApp<T> {
         let mut rect = RECT::default();
         unsafe {
             GetClientRect(
-                expect!(self.hwnd.get(), "You need to call init first"),
+                *expect!(self.hwnd.get(), "You need to call init first"),
                 &mut rect,
             );
         }

@@ -14,7 +14,6 @@ crate-type = ["cdylib"]
 egui = "0.20.1"
 image = { version = "0.24", features = ["jpeg"] }
 detour = { git = "https://github.com/Hpmason/detour-rs.git" }
-winapi = "0.3.9"
 
 [dependencies.egui_extras]
 version = "0.20"
@@ -25,10 +24,9 @@ path = "../egui-opengl-internal"
 features = ["force-compile", "save-blob", "parking-lot"]
 
 [dependencies.windows]
-version = "0.36"
+version = "0.44"
 features = [
     "Win32_UI_WindowsAndMessaging",
     "Win32_Foundation",
     "Win32_Graphics_Gdi",
-    "Win32_Graphics_OpenGL",
 ]
