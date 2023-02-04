@@ -22,6 +22,7 @@ use windows::{
 struct AppData<T> {
     ui: Box<dyn FnMut(&Context, &mut T) + 'static>,
     gl_context: HGLRC,
+    window: HWND,
     painter: painter::Painter,
     input_collector: InputCollector,
     ctx: Context,
@@ -93,6 +94,7 @@ impl<T> OpenGLApp<T> {
                 input_collector: InputCollector::new(window),
                 ui: Box::new(ui),
                 gl_context,
+                window,
                 ctx: context,
                 client_rect: (0, 0),
                 state,
@@ -198,6 +200,11 @@ impl<T> OpenGLApp<T> {
 
         let egui_input = this.ctx.wants_keyboard_input() || this.ctx.wants_pointer_input();
         egui_input
+    }
+
+    pub fn get_window(&self) -> HWND {
+        let data = &mut *self.lock_data();
+        data.window
     }
 }
 

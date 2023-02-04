@@ -22,12 +22,28 @@ extern "stdcall" fn DllMain(hinst: usize, reason: u32) -> i32 {
     if reason == 1 {
         std::thread::spawn(move || unsafe { main_thread(hinst) });
     }
+    
+    if reason == 0 {
+        unsafe {
+            WglSwapBuffersHook.disable().unwrap();
+            let wnd_proc = OLD_WND_PROC.unwrap().unwrap();
+            let _: Option<WNDPROC> = Some(transmute(SetWindowLongPtrA(
+                APP.get_window(),
+                GWLP_WNDPROC,
+                wnd_proc as usize as _,
+            )));
+
+            utils::free_console();
+            std::thread::sleep(std::time::Duration::from_millis(500)); 
+        }
+    }
 
     1
 }
 
 static mut APP: OpenGLApp<i32> = OpenGLApp::new();
 static mut OLD_WND_PROC: Option<WNDPROC> = None;
+static mut EXITING: bool = false;
 
 type FnWglSwapBuffers = unsafe extern "stdcall" fn(HDC) -> HRESULT;
 static_detour! {
@@ -129,6 +145,11 @@ fn ui(ctx: &Context, _: &mut i32) {
                 "{:?}",
                 &ui.input().pointer.button_down(egui::PointerButton::Primary)
             ));
+
+            ui.separator();
+            if ui.button("exit").clicked() {                
+                EXITING = true;
+            }
         });
     }
 }
@@ -148,5 +169,6 @@ unsafe fn main_thread(_hinst: usize) {
         .unwrap();
 
     #[allow(clippy::empty_loop)]
-    loop {}
+    while !EXITING {}
+    utils::unload();
 }
