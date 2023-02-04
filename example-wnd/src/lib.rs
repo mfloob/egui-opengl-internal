@@ -92,60 +92,9 @@ unsafe extern "stdcall" fn hk_wnd_proc(
 
 fn ui(ctx: &Context, _: &mut i32) {
     unsafe {
-        // You should not use statics like this, it's made
-        // this way for the sake of example.
-        static mut UI_CHECK: bool = true;
-        static mut TEXT: Option<String> = None;
-        static mut VALUE: f32 = 0.;
-        static mut COLOR: [f32; 3] = [0., 0., 0.];
-        static ONCE: Once = Once::new();
-
-        ONCE.call_once(|| {
-        });
-
-        if TEXT.is_none() {
-            TEXT = Some(String::from("Test"));
-        }
-
         egui::containers::Window::new("Main menu").show(ctx, |ui| {
-            ui.label(RichText::new("Test").color(Color32::LIGHT_BLUE));
-            ui.label(RichText::new("Other").color(Color32::WHITE));
-            ui.separator();
-
-            let input = ctx.input().pointer.clone();
-            ui.label(format!(
-                "X1: {} X2: {}",
-                input.button_down(egui::PointerButton::Extra1),
-                input.button_down(egui::PointerButton::Extra2)
-            ));
-
-            let mods = ui.input().modifiers;
-            ui.label(format!(
-                "Ctrl: {} Shift: {} Alt: {}",
-                mods.ctrl, mods.shift, mods.alt
-            ));
-
-            if ui.input().modifiers.matches(Modifiers::CTRL) && ui.input().key_pressed(Key::R) {
-                println!("Pressed");
-            }
-
-            ui.checkbox(&mut UI_CHECK, "Some checkbox");
-            ui.text_edit_singleline(TEXT.as_mut().unwrap());
-            ScrollArea::vertical().max_height(200.).show(ui, |ui| {
-                for i in 1..=100 {
-                    ui.label(format!("Label: {}", i));
-                }
-            });
-
-            Slider::new(&mut VALUE, -1.0..=1.0).ui(ui);
-
-            ui.color_edit_button_rgb(&mut COLOR);
-
-            ui.label(format!(
-                "{:?}",
-                &ui.input().pointer.button_down(egui::PointerButton::Primary)
-            ));
-
+            test_ui(ctx, ui);
+    
             ui.separator();
             if ui.button("exit").clicked() {                
                 EXITING = true;
@@ -171,4 +120,58 @@ unsafe fn main_thread(_hinst: usize) {
     #[allow(clippy::empty_loop)]
     while !EXITING {}
     utils::unload();
+}
+
+unsafe fn test_ui(ctx: &egui::Context, ui: &mut egui::Ui) {
+    // You should not use statics like this, it's made
+    // this way for the sake of example.
+    static mut UI_CHECK: bool = true;
+    static mut TEXT: Option<String> = None;
+    static mut VALUE: f32 = 0.;
+    static mut COLOR: [f32; 3] = [0., 0., 0.];
+    static ONCE: Once = Once::new();
+
+    ONCE.call_once(|| {
+    });
+
+    if TEXT.is_none() {
+        TEXT = Some(String::from("Test"));
+    }
+    ui.label(RichText::new("Test").color(Color32::LIGHT_BLUE));
+    ui.label(RichText::new("Other").color(Color32::WHITE));
+    ui.separator();
+
+    let input = ctx.input().pointer.clone();
+    ui.label(format!(
+        "X1: {} X2: {}",
+        input.button_down(egui::PointerButton::Extra1),
+        input.button_down(egui::PointerButton::Extra2)
+    ));
+
+    let mods = ui.input().modifiers;
+    ui.label(format!(
+        "Ctrl: {} Shift: {} Alt: {}",
+        mods.ctrl, mods.shift, mods.alt
+    ));
+
+    if ui.input().modifiers.matches(Modifiers::CTRL) && ui.input().key_pressed(Key::R) {
+        println!("Pressed");
+    }
+
+    ui.checkbox(&mut UI_CHECK, "Some checkbox");
+    ui.text_edit_singleline(TEXT.as_mut().unwrap());
+    ScrollArea::vertical().max_height(200.).show(ui, |ui| {
+        for i in 1..=100 {
+            ui.label(format!("Label: {}", i));
+        }
+    });
+
+    Slider::new(&mut VALUE, -1.0..=1.0).ui(ui);
+
+    ui.color_edit_button_rgb(&mut COLOR);
+
+    ui.label(format!(
+        "{:?}",
+        &ui.input().pointer.button_down(egui::PointerButton::Primary)
+    ));
 }
