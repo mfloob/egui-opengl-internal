@@ -13,7 +13,7 @@ crate-type = ["cdylib"]
 [dependencies]
 egui = "0.20.1"
 image = { version = "0.24", features = ["jpeg"] }
-detour = { git = "https://github.com/Hpmason/detour-rs.git" }
+retour = "0.1"
 
 [dependencies.egui_extras]
 version = "0.20"
