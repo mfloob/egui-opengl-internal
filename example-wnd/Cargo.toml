@@ -13,7 +13,7 @@ crate-type = ["cdylib"]
 [dependencies]
 egui = "0.20.1"
 image = { version = "0.24", features = ["jpeg"] }
-retour = "0.1"
+retour = "0.1.0"
 
 [dependencies.egui_extras]
 version = "0.20"
