@@ -1,4 +1,4 @@
-use detour::static_detour;
+use retour::static_detour;
 use egui::{
     Context, Key, Modifiers, RichText, 
     ScrollArea, Slider, Widget, Color32
