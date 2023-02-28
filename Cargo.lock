@@ -193,31 +193,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "detour"
-version = "0.1.0"
-source = "git+https://github.com/Hpmason/detour-rs.git#25c0d9a09c5d37f763b995c1638c2d2116eeaf20"
-dependencies = [
- "cfg-if",
- "generic-array",
- "lazy_static",
- "libc",
- "libudis86-sys",
- "mmap-fixed-fixed",
- "region",
- "slice-pool",
-]
-
-[[package]]
 name = "ecolor"
-version = "0.20.0"
+version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b601108bca3af7650440ace4ca55b2daf52c36f2635be3587d77b16efd8d0691"
+checksum = "1f99fe3cac305af9d6d92971af60d0f7ea4d783201ef1673571567b6699964d9"
 
 [[package]]
 name = "egui"
-version = "0.20.1"
+version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "65a5e883a316e53866977450eecfbcac9c48109c2ab3394af29feb83fcde4ea9"
+checksum = "6412a21e0bde7c0918f7fb44bbbb86b5e1f88e63c026a4e747cc7af02f76dfbe"
 dependencies = [
  "ahash",
  "epaint",
@@ -236,15 +221,14 @@ dependencies = [
  "parking_lot",
  "spin",
  "thiserror",
- "winapi",
  "windows",
 ]
 
 [[package]]
 name = "egui_extras"
-version = "0.20.0"
+version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1975cd88ff7430f93b29e6b9868b648a8ff6a43b08b9ff8474ee0a648bd8f9a6"
+checksum = "8f051342e97dfa2445107cb7d2e720617f5c840199b5cb4fe0ffcf481fcf5cce"
 dependencies = [
  "egui",
  "image",
@@ -259,15 +243,15 @@ checksum = "90e5c1c8368803113bf0c9584fc495a58b86dc8a29edbf8fe877d21d9507e797"
 
 [[package]]
 name = "emath"
-version = "0.20.0"
+version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5277249c8c3430e7127e4f2c40a77485e7baf11ae132ce9b3253a8ed710df0a0"
+checksum = "b8ecd80612937e0267909d5351770fe150004e24dab93954f69ca62eecd3f77e"
 
 [[package]]
 name = "epaint"
-version = "0.20.0"
+version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "de14b65fe5e423e0058f77a8beb2c863b056d0566d6c4ce0d097aa5814cb705a"
+checksum = "12e78b5c58a1f7f621f9d546add2adce20636422c9b251e29f749e8a2f713c95"
 dependencies = [
  "ab_glyph",
  "ahash",
@@ -282,11 +266,11 @@ dependencies = [
 name = "example-wnd"
 version = "0.1.0"
 dependencies = [
- "detour",
  "egui",
  "egui-opengl-internal",
  "egui_extras",
  "image",
+ "retour",
  "windows",
 ]
 
@@ -759,6 +743,22 @@ dependencies = [
  "libc",
  "mach",
  "winapi",
+]
+
+[[package]]
+name = "retour"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a83f9f8fa2d02a11cb18d157ca898f1d8a197c19b084ef8d0a8da256a5c58935"
+dependencies = [
+ "cfg-if",
+ "generic-array",
+ "lazy_static",
+ "libc",
+ "libudis86-sys",
+ "mmap-fixed-fixed",
+ "region",
+ "slice-pool",
 ]
 
 [[package]]

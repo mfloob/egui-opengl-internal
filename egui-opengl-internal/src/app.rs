@@ -1,20 +1,16 @@
-use crate::{
-    input::{InputCollector}, 
-    painter,
-    utils
-};
+use crate::{input::InputCollector, painter, utils};
 use clipboard::{windows_clipboard::WindowsClipboardContext, ClipboardProvider};
-use egui::{Context};
+use egui::Context;
 use once_cell::sync::OnceCell;
-use std::{ops::DerefMut};
-use windows::{
-    Win32::{
-        Foundation::{HWND, LPARAM, RECT, WPARAM},
-        Graphics::{
-            OpenGL::{HGLRC, wglCreateContext, wglGetCurrentContext, wglMakeCurrent},
-            Gdi::{HDC},
-        },
-        UI::WindowsAndMessaging::{GetClientRect, GUITHREADINFO_FLAGS, GUITHREADINFO, GetGUIThreadInfo},
+use std::ops::DerefMut;
+use windows::Win32::{
+    Foundation::{HWND, LPARAM, RECT, WPARAM},
+    Graphics::{
+        Gdi::HDC,
+        OpenGL::{wglCreateContext, wglGetCurrentContext, wglMakeCurrent, HGLRC},
+    },
+    UI::WindowsAndMessaging::{
+        GetClientRect, GetGUIThreadInfo, GUITHREADINFO, GUITHREADINFO_FLAGS,
     },
 };
 
@@ -64,8 +60,8 @@ impl<T> OpenGLApp<T> {
     /// Initializes application and state. You should call this only once!
     pub fn init_with_state_context(
         &self,
-        hdc: HDC, 
-        window: HWND, 
+        hdc: HDC,
+        window: HWND,
         ui: impl FnMut(&Context, &mut T) + 'static,
         state: T,
         context: Context,
@@ -74,7 +70,7 @@ impl<T> OpenGLApp<T> {
             if self.hwnd.get().is_some() {
                 panic_msg!("You must call init only once");
             }
-            
+
             if window.0 == -1 {
                 panic_msg!("Invalid output window descriptor");
             }
@@ -87,7 +83,7 @@ impl<T> OpenGLApp<T> {
             let o_context = wglGetCurrentContext();
             let gl_context = wglCreateContext(hdc).unwrap();
             wglMakeCurrent(hdc, gl_context).unwrap();
-            
+
             let painter = painter::Painter::new();
 
             *self.data.lock() = Some(AppData {
@@ -98,7 +94,7 @@ impl<T> OpenGLApp<T> {
                 ctx: context,
                 client_rect: (0, 0),
                 state,
-                painter
+                painter,
             });
 
             wglMakeCurrent(hdc, o_context).unwrap();
@@ -109,8 +105,8 @@ impl<T> OpenGLApp<T> {
     #[inline]
     pub fn init_with_state(
         &self,
-        hdc: HDC, 
-        window: HWND, 
+        hdc: HDC,
+        window: HWND,
         ui: impl FnMut(&Context, &mut T) + 'static,
         state: T,
     ) {
@@ -121,8 +117,8 @@ impl<T> OpenGLApp<T> {
     #[inline]
     pub fn init_with_mutate(
         &self,
-        hdc: HDC, 
-        window: HWND, 
+        hdc: HDC,
+        window: HWND,
         ui: impl FnMut(&Context, &mut T) + 'static,
         mut state: T,
         mutate: impl FnOnce(&mut Context, &mut T),
@@ -165,7 +161,7 @@ impl<T> OpenGLApp<T> {
         unsafe {
             let this = &mut *self.lock_data();
 
-            let o_context = wglGetCurrentContext();  
+            let o_context = wglGetCurrentContext();
             wglMakeCurrent(hdc, this.gl_context).unwrap();
 
             let output = this.ctx.run(this.input_collector.collect_input(), |ctx| {
@@ -183,7 +179,12 @@ impl<T> OpenGLApp<T> {
 
             let client_rect = self.poll_client_rect(this);
             let clipped_shapes = this.ctx.tessellate(output.shapes);
-            this.painter.paint_and_update_textures(1.0, &clipped_shapes, &output.textures_delta, &client_rect);
+            this.painter.paint_and_update_textures(
+                1.0,
+                &clipped_shapes,
+                &output.textures_delta,
+                &client_rect,
+            );
 
             wglMakeCurrent(hdc, o_context).unwrap();
         }
@@ -195,8 +196,7 @@ impl<T> OpenGLApp<T> {
     #[inline]
     pub fn wnd_proc(&self, umsg: u32, wparam: WPARAM, lparam: LPARAM) -> bool {
         let this = &mut *self.lock_data();
-        this.input_collector
-            .process(umsg, wparam.0, lparam.0);
+        this.input_collector.process(umsg, wparam.0, lparam.0);
 
         let egui_input = this.ctx.wants_keyboard_input() || this.ctx.wants_pointer_input();
         egui_input
@@ -212,11 +212,11 @@ impl<T> OpenGLApp<T> {
     #[inline]
     fn poll_client_rect(&self, data: &mut AppData<T>) -> (u32, u32) {
         let mut client_rect = data.client_rect;
-        static INIT: std::sync::Once = std::sync::Once::new();        
+        static INIT: std::sync::Once = std::sync::Once::new();
         INIT.call_once(|| {
             client_rect = self.get_client_rect();
         });
-        
+
         let mut gui_thread_info = GUITHREADINFO {
             cbSize: std::mem::size_of::<GUITHREADINFO>() as u32,
             flags: GUITHREADINFO_FLAGS(0),
@@ -226,14 +226,19 @@ impl<T> OpenGLApp<T> {
             hwndMenuOwner: HWND(0),
             hwndMoveSize: HWND(0),
             hwndCaret: HWND(0),
-            rcCaret: RECT { left: 0, top: 0, right: 0, bottom: 0 },
+            rcCaret: RECT {
+                left: 0,
+                top: 0,
+                right: 0,
+                bottom: 0,
+            },
         };
         unsafe { GetGUIThreadInfo(0, &mut gui_thread_info) };
-        
+
         if gui_thread_info.hwndMoveSize.0 > 0 {
             client_rect = self.get_client_rect();
         }
-        
+
         data.client_rect = client_rect;
         client_rect
     }
@@ -248,6 +253,9 @@ impl<T> OpenGLApp<T> {
             );
         }
 
-        ((rect.right - rect.left) as u32, (rect.bottom - rect.top) as u32)
+        (
+            (rect.right - rect.left) as u32,
+            (rect.bottom - rect.top) as u32,
+        )
     }
 }

@@ -1,3 +1,4 @@
+use crate::shader;
 use egui::{
     emath::Rect,
     epaint::{Mesh, Primitive},
@@ -5,7 +6,6 @@ use egui::{
 };
 use gl::types::*;
 use std::ffi::{c_void, CString};
-use crate::shader;
 
 pub struct UserTexture {
     size: (usize, usize),
@@ -89,8 +89,12 @@ pub struct Painter {
 
 impl Painter {
     pub fn new() -> Painter {
-        let vs = shader::Shader::compile_shader(include_str!("shader/vertex.vert"), gl::VERTEX_SHADER);
-        let fs = shader::Shader::compile_shader(include_str!("shader/fragment.frag"), gl::FRAGMENT_SHADER);
+        let vs =
+            shader::Shader::compile_shader(include_str!("shader/vertex.vert"), gl::VERTEX_SHADER);
+        let fs = shader::Shader::compile_shader(
+            include_str!("shader/fragment.frag"),
+            gl::FRAGMENT_SHADER,
+        );
 
         let program = shader::Shader::link_program(vs, fs);
 
@@ -124,7 +128,7 @@ impl Painter {
         pixels_per_point: f32,
         clipped_primitives: &[egui::ClippedPrimitive],
         textures_delta: &egui::TexturesDelta,
-        client_rect: &(u32, u32)
+        client_rect: &(u32, u32),
     ) {
         for (id, image_delta) in &textures_delta.set {
             self.set_texture(*id, image_delta);
@@ -142,7 +146,7 @@ impl Painter {
         &mut self,
         pixels_per_point: f32,
         clipped_primitives: &[egui::ClippedPrimitive],
-        client_rect: &(u32, u32)
+        client_rect: &(u32, u32),
     ) {
         self.upload_user_textures();
 
@@ -248,7 +252,13 @@ impl Painter {
         texture.dirty = true;
     }
 
-    fn paint_mesh(&self, mesh: &Mesh, clip_rect: &Rect, pixels_per_point: f32, client_rect: &(u32, u32)) {
+    fn paint_mesh(
+        &self,
+        mesh: &Mesh,
+        clip_rect: &Rect,
+        pixels_per_point: f32,
+        client_rect: &(u32, u32),
+    ) {
         debug_assert!(mesh.is_valid());
 
         if let Some(it) = self.textures.get(&mesh.texture_id) {
@@ -260,8 +270,7 @@ impl Painter {
                 );
             }
 
-            let screen_size_pixels =
-                egui::vec2(client_rect.0 as f32, client_rect.1 as f32);
+            let screen_size_pixels = egui::vec2(client_rect.0 as f32, client_rect.1 as f32);
 
             let clip_min_x = pixels_per_point * clip_rect.min.x;
             let clip_min_y = pixels_per_point * clip_rect.min.y;
