@@ -1,18 +1,12 @@
+use egui::{Color32, Context, Key, Modifiers, RichText, ScrollArea, Slider, Widget};
+use egui_opengl_internal::{utils, OpenGLApp};
 use retour::static_detour;
-use egui::{
-    Context, Key, Modifiers, RichText, 
-    ScrollArea, Slider, Widget, Color32
-};
-use egui_opengl_internal::{OpenGLApp, utils};
-use std::{
-    intrinsics::transmute,
-    sync::{Once},
-};
-use windows::{    
-    core::{HRESULT},
+use std::{intrinsics::transmute, sync::Once};
+use windows::{
+    core::HRESULT,
     Win32::{
         Foundation::{HWND, LPARAM, LRESULT, WPARAM},
-        Graphics::Gdi::{HDC, WindowFromDC},
+        Graphics::Gdi::{WindowFromDC, HDC},
         UI::WindowsAndMessaging::{CallWindowProcW, SetWindowLongPtrA, GWLP_WNDPROC, WNDPROC},
     },
 };
@@ -22,7 +16,7 @@ extern "stdcall" fn DllMain(hinst: usize, reason: u32) -> i32 {
     if reason == 1 {
         std::thread::spawn(move || unsafe { main_thread(hinst) });
     }
-    
+
     if reason == 0 {
         unsafe {
             WglSwapBuffersHook.disable().unwrap();
@@ -34,7 +28,7 @@ extern "stdcall" fn DllMain(hinst: usize, reason: u32) -> i32 {
             )));
 
             utils::free_console();
-            std::thread::sleep(std::time::Duration::from_millis(500)); 
+            std::thread::sleep(std::time::Duration::from_millis(500));
         }
     }
 
@@ -94,9 +88,9 @@ fn ui(ctx: &Context, _: &mut i32) {
     unsafe {
         egui::containers::Window::new("Main menu").show(ctx, |ui| {
             test_ui(ctx, ui);
-    
+
             ui.separator();
-            if ui.button("exit").clicked() {                
+            if ui.button("exit").clicked() {
                 EXITING = true;
             }
         });
@@ -131,8 +125,7 @@ unsafe fn test_ui(ctx: &egui::Context, ui: &mut egui::Ui) {
     static mut COLOR: [f32; 3] = [0., 0., 0.];
     static ONCE: Once = Once::new();
 
-    ONCE.call_once(|| {
-    });
+    ONCE.call_once(|| {});
 
     if TEXT.is_none() {
         TEXT = Some(String::from("Test"));
@@ -141,20 +134,20 @@ unsafe fn test_ui(ctx: &egui::Context, ui: &mut egui::Ui) {
     ui.label(RichText::new("Other").color(Color32::WHITE));
     ui.separator();
 
-    let input = ctx.input().pointer.clone();
+    let input = ctx.input(|input| input.pointer.clone());
     ui.label(format!(
         "X1: {} X2: {}",
         input.button_down(egui::PointerButton::Extra1),
         input.button_down(egui::PointerButton::Extra2)
     ));
 
-    let mods = ui.input().modifiers;
+    let mods = ui.input(|input| input.modifiers);
     ui.label(format!(
         "Ctrl: {} Shift: {} Alt: {}",
         mods.ctrl, mods.shift, mods.alt
     ));
 
-    if ui.input().modifiers.matches(Modifiers::CTRL) && ui.input().key_pressed(Key::R) {
+    if ui.input(|input| input.modifiers.matches(Modifiers::CTRL) && input.key_pressed(Key::R)) {
         println!("Pressed");
     }
 
@@ -172,6 +165,6 @@ unsafe fn test_ui(ctx: &egui::Context, ui: &mut egui::Ui) {
 
     ui.label(format!(
         "{:?}",
-        &ui.input().pointer.button_down(egui::PointerButton::Primary)
+        &ui.input(|input| input.pointer.button_down(egui::PointerButton::Primary))
     ));
 }

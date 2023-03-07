@@ -2,7 +2,7 @@
 name = "example-wnd"
 version = "0.1.0"
 edition = "2021"
-authors = ["floob, sy1ntexx, unknowntrojan"]
+authors = ["floob", "sy1ntexx", "unknowntrojan"]
 description = "Example opengl dll for egui d3d11 showcase."
 license = "MIT"
 publish = false
@@ -11,12 +11,12 @@ publish = false
 crate-type = ["cdylib"]
 
 [dependencies]
-egui = "0.20.1"
+egui = "0.21"
 image = { version = "0.24", features = ["jpeg"] }
 retour = "0.1.0"
 
 [dependencies.egui_extras]
-version = "0.20"
+version = "0.21"
 features = ["image"]
 
 [dependencies.egui-opengl-internal]
