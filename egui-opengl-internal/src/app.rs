@@ -9,9 +9,7 @@ use windows::Win32::{
         Gdi::HDC,
         OpenGL::{wglCreateContext, wglGetCurrentContext, wglMakeCurrent, HGLRC},
     },
-    UI::WindowsAndMessaging::{
-        GetClientRect, GetGUIThreadInfo, GUITHREADINFO, GUITHREADINFO_FLAGS,
-    },
+    UI::WindowsAndMessaging::{GetClientRect, WM_SIZING},
 };
 
 #[allow(clippy::type_complexity)]
@@ -198,6 +196,10 @@ impl<T> OpenGLApp<T> {
         let this = &mut *self.lock_data();
         this.input_collector.process(umsg, wparam.0, lparam.0);
 
+        if umsg == WM_SIZING {
+            this.client_rect = self.get_client_rect();
+        }
+
         let egui_input = this.ctx.wants_keyboard_input() || this.ctx.wants_pointer_input();
         egui_input
     }
@@ -211,36 +213,12 @@ impl<T> OpenGLApp<T> {
 impl<T> OpenGLApp<T> {
     #[inline]
     fn poll_client_rect(&self, data: &mut AppData<T>) -> (u32, u32) {
-        let mut client_rect = data.client_rect;
         static INIT: std::sync::Once = std::sync::Once::new();
         INIT.call_once(|| {
-            client_rect = self.get_client_rect();
+            data.client_rect = self.get_client_rect();
         });
 
-        let mut gui_thread_info = GUITHREADINFO {
-            cbSize: std::mem::size_of::<GUITHREADINFO>() as u32,
-            flags: GUITHREADINFO_FLAGS(0),
-            hwndActive: HWND(0),
-            hwndFocus: HWND(0),
-            hwndCapture: HWND(0),
-            hwndMenuOwner: HWND(0),
-            hwndMoveSize: HWND(0),
-            hwndCaret: HWND(0),
-            rcCaret: RECT {
-                left: 0,
-                top: 0,
-                right: 0,
-                bottom: 0,
-            },
-        };
-        unsafe { GetGUIThreadInfo(0, &mut gui_thread_info) };
-
-        if gui_thread_info.hwndMoveSize.0 > 0 {
-            client_rect = self.get_client_rect();
-        }
-
-        data.client_rect = client_rect;
-        client_rect
+        data.client_rect
     }
 
     #[inline]
