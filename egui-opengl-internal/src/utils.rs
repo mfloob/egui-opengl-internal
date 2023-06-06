@@ -3,12 +3,11 @@ use std::ffi::CString;
 use windows::{
     core::PCSTR,
     Win32::{
-        Foundation::HINSTANCE,
         Graphics::OpenGL::wglGetProcAddress,
         System::{
             Console::{AllocConsole, FreeConsole},
             LibraryLoader::{FreeLibraryAndExitThread, GetModuleHandleA, GetProcAddress},
-        },
+        }, Foundation::HMODULE,
     },
 };
 
@@ -29,10 +28,10 @@ pub unsafe fn get_proc_address(function_name: &str) -> *const usize {
     }
 
     // this shouldn't silently error tbh, but im going to copy the old behavior
-    0 as *const usize
+    std::ptr::null()
 }
 
-pub fn get_module(module_name: &str) -> HINSTANCE {
+pub fn get_module(module_name: &str) -> HMODULE {
     unsafe {
         let o = CString::new(module_name).unwrap();
         let module = GetModuleHandleA(PCSTR::from_raw(o.as_ptr() as *const u8));
@@ -41,7 +40,7 @@ pub fn get_module(module_name: &str) -> HINSTANCE {
             module
         } else {
             // this also shouldn't silently error
-            HINSTANCE(0)
+            HMODULE(0)
         }
     }
 }

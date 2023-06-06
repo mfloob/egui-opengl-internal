@@ -11,7 +11,7 @@ publish = false
 crate-type = ["cdylib"]
 
 [dependencies]
-egui = "0.21"
+egui = "0.22.0"
 image = { version = "0.24", features = ["jpeg"] }
 retour = "0.1.0"
 
@@ -24,7 +24,7 @@ path = "../egui-opengl-internal"
 features = ["force-compile", "save-blob", "parking-lot"]
 
 [dependencies.windows]
-version = "0.44"
+version = "0.48"
 features = [
     "Win32_UI_WindowsAndMessaging",
     "Win32_Foundation",
