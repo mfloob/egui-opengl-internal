@@ -11,12 +11,12 @@ publish = false
 crate-type = ["cdylib"]
 
 [dependencies]
-egui = "0.22.0"
-image = { version = "0.24", features = ["jpeg"] }
-retour = "0.1.0"
+egui = "0.26"
+image = { version = "0.24.8", features = ["jpeg"] }
+retour = { version = "0.3.1", features = ["static-detour"] }
 
 [dependencies.egui_extras]
-version = "0.21"
+version = "0.26"
 features = ["image"]
 
 [dependencies.egui-opengl-internal]
@@ -24,7 +24,7 @@ path = "../egui-opengl-internal"
 features = ["force-compile", "save-blob", "parking-lot"]
 
 [dependencies.windows]
-version = "0.48"
+version = "0.52"
 features = [
     "Win32_UI_WindowsAndMessaging",
     "Win32_Foundation",
