@@ -134,7 +134,7 @@ impl Painter {
             self.set_texture(*id, image_delta);
         }
 
-        self.paint_primitives(pixels_per_point, clipped_primitives, &client_rect);
+        self.paint_primitives(pixels_per_point, clipped_primitives, client_rect);
 
         for &id in &textures_delta.free {
             self.free_texture(id);

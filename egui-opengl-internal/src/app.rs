@@ -154,7 +154,7 @@ impl<T: Default> OpenGLApp<T> {
 
 impl<T> OpenGLApp<T> {
     /// Present call. Should be called once per original present call, before or inside of hook.
-    #[allow(clippy::cast_ref_to_mut)]
+    #[allow(cast_ref_to_mut)]
     pub fn render(&self, hdc: HDC) {
         unsafe {
             let this = &mut *self.lock_data();
@@ -200,8 +200,7 @@ impl<T> OpenGLApp<T> {
             this.client_rect = self.get_client_rect();
         }
 
-        let egui_input = this.ctx.wants_keyboard_input() || this.ctx.wants_pointer_input();
-        egui_input
+        this.ctx.wants_keyboard_input() || this.ctx.wants_pointer_input()
     }
 
     pub fn get_window(&self) -> HWND {
