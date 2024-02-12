@@ -46,11 +46,12 @@ static_detour! {
 
 fn hk_wgl_swap_buffers(hdc: HDC) -> HRESULT {
     unsafe {
+        let window = WindowFromDC(hdc);
+
         static INIT: Once = Once::new();
         INIT.call_once(|| {
             println!("wglSwapBuffers successfully hooked.");
 
-            let window = WindowFromDC(hdc);
             APP.init_default(hdc, window, ui);
 
             OLD_WND_PROC = Some(transmute(SetWindowLongPtrA(
@@ -59,6 +60,14 @@ fn hk_wgl_swap_buffers(hdc: HDC) -> HRESULT {
                 hk_wnd_proc as usize as _,
             )));
         });
+
+        if !APP.get_window().eq(&window) {
+            SetWindowLongPtrA(
+                window,
+                GWLP_WNDPROC,
+                hk_wnd_proc as usize as _,
+            );
+        }
 
         APP.render(hdc);
         WglSwapBuffersHook.call(hdc)
@@ -147,7 +156,7 @@ unsafe fn test_ui(ctx: &egui::Context, ui: &mut egui::Ui) {
         mods.ctrl, mods.shift, mods.alt
     ));
 
-    if ui.input(|input| input.modifiers.matches(Modifiers::CTRL) && input.key_pressed(Key::R)) {
+    if ui.input(|input| input.modifiers.matches_exact(Modifiers::CTRL) && input.key_pressed(Key::R)) {
         println!("Pressed");
     }
 

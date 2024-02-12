@@ -1,11 +1,9 @@
 use clipboard::{windows_clipboard::WindowsClipboardContext, ClipboardProvider};
-use egui::{Event, Key, Modifiers, PointerButton, Pos2, RawInput, Rect, Vec2};
+use egui::{Event, Key, Modifiers, PointerButton, Pos2, RawInput, Rect, Vec2, Context};
+use windows::Wdk::System::SystemInformation::NtQuerySystemTime;
 use windows::Win32::{
     Foundation::{HWND, RECT},
-    System::{
-        SystemServices::{MK_CONTROL, MK_SHIFT},
-        WindowsProgramming::NtQuerySystemTime,
-    },
+    System::SystemServices::{MK_CONTROL, MK_SHIFT},
     UI::{
         Input::KeyboardAndMouse::{
             GetAsyncKeyState, VIRTUAL_KEY, VK_BACK, VK_CONTROL, VK_DELETE, VK_DOWN, VK_END,
@@ -227,6 +225,7 @@ impl InputCollector {
                         modifiers,
                         key,
                         repeat: lparam & (KF_REPEAT as isize) > 0,
+                        physical_key: None,
                     });
                 }
                 InputResult::Key
@@ -241,6 +240,7 @@ impl InputCollector {
                         modifiers,
                         key,
                         repeat: lparam & (KF_REPEAT as isize) > 0,
+                        physical_key: None,
                     });
                 }
                 InputResult::Key
@@ -255,18 +255,19 @@ impl InputCollector {
         }
     }
 
-    pub fn collect_input(&mut self) -> RawInput {
+    pub fn collect_input(&mut self, ctx: &Context) -> RawInput {
         RawInput {
             modifiers: self.modifiers.unwrap_or_default(),
             events: std::mem::take(&mut self.events),
             screen_rect: Some(self.get_screen_rect()),
             time: Some(Self::get_system_time()),
-            pixels_per_point: Some(1.),
             max_texture_side: None,
             predicted_dt: 1. / 60.,
             hovered_files: vec![],
             dropped_files: vec![],
             focused: true,
+            viewport_id: ctx.viewport_id(),
+            viewports: ctx.input(|i| i.raw.viewports.clone()),
         }
     }
 
@@ -274,7 +275,7 @@ impl InputCollector {
     pub fn get_system_time() -> f64 {
         let mut time = 0;
         unsafe {
-            expect!(NtQuerySystemTime(&mut time), "Failed to get system time");
+            expect!(NtQuerySystemTime(&mut time).ok(), "Failed to get system time");
         }
 
         // dumb ass, read the docs. egui clearly says `in seconds`.
@@ -288,7 +289,7 @@ impl InputCollector {
     pub fn get_screen_size(&self) -> Pos2 {
         let mut rect = RECT::default();
         unsafe {
-            GetClientRect(self.hwnd, &mut rect);
+            let _ = GetClientRect(self.hwnd, &mut rect);
         }
 
         Pos2::new(
@@ -338,9 +339,9 @@ fn get_key_modifiers(msg: u32) -> Modifiers {
 
 fn get_key(wparam: usize) -> Option<Key> {
     match wparam {
-        0x30..=0x39 => unsafe { Some(std::mem::transmute::<_, Key>(wparam as u8 - 0x1F)) },
-        0x41..=0x5A => unsafe { Some(std::mem::transmute::<_, Key>(wparam as u8 - 0x26)) },
-        0x70..=0x83 => unsafe { Some(std::mem::transmute::<_, Key>(wparam as u8 - 0x3B)) },
+        0x30..=0x39 => unsafe { Some(std::mem::transmute::<_, Key>(wparam as u8 - 0x10)) }, // 0-9
+        0x41..=0x5A => unsafe { Some(std::mem::transmute::<_, Key>(wparam as u8 - 0x17)) }, // A-Z
+        0x70..=0x83 => unsafe { Some(std::mem::transmute::<_, Key>(wparam as u8 - 0x2C)) }, // F1-F20
         _ => match VIRTUAL_KEY(wparam as u16) {
             VK_DOWN => Some(Key::ArrowDown),
             VK_LEFT => Some(Key::ArrowLeft),
