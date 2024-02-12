@@ -6,10 +6,10 @@ use std::ops::DerefMut;
 use windows::Win32::{
     Foundation::{HWND, LPARAM, RECT, WPARAM},
     Graphics::{
-        Gdi::HDC,
+        Gdi::{WindowFromDC, HDC},
         OpenGL::{wglCreateContext, wglGetCurrentContext, wglMakeCurrent, HGLRC},
     },
-    UI::WindowsAndMessaging::{GetClientRect, WM_SIZING},
+    UI::WindowsAndMessaging::{GetClientRect, WM_SIZE},
 };
 
 #[allow(clippy::type_complexity)]
@@ -154,15 +154,22 @@ impl<T: Default> OpenGLApp<T> {
 
 impl<T> OpenGLApp<T> {
     /// Present call. Should be called once per original present call, before or inside of hook.
-    #[allow(cast_ref_to_mut)]
+    #[allow(clippy::cast_ref_to_mut)]
     pub fn render(&self, hdc: HDC) {
         unsafe {
             let this = &mut *self.lock_data();
 
+            let window = WindowFromDC(hdc);
+            if !window.eq(&this.window) {
+                this.window = window;
+                this.input_collector = InputCollector::new(window);
+                this.client_rect = self.get_client_rect(this.window);
+            }
+
             let o_context = wglGetCurrentContext();
             wglMakeCurrent(hdc, this.gl_context).unwrap();
 
-            let output = this.ctx.run(this.input_collector.collect_input(), |ctx| {
+            let output = this.ctx.run(this.input_collector.collect_input(&this.ctx), |ctx| {
                 (this.ui)(ctx, &mut this.state);
             });
 
@@ -176,7 +183,7 @@ impl<T> OpenGLApp<T> {
             }
 
             let client_rect = self.poll_client_rect(this);
-            let clipped_shapes = this.ctx.tessellate(output.shapes);
+            let clipped_shapes = this.ctx.tessellate(output.shapes, 1.);
             this.painter.paint_and_update_textures(
                 1.0,
                 &clipped_shapes,
@@ -196,8 +203,8 @@ impl<T> OpenGLApp<T> {
         let this = &mut *self.lock_data();
         this.input_collector.process(umsg, wparam.0, lparam.0);
 
-        if umsg == WM_SIZING {
-            this.client_rect = self.get_client_rect();
+        if umsg == WM_SIZE {
+            this.client_rect = self.get_client_rect(this.window);
         }
 
         this.ctx.wants_keyboard_input() || this.ctx.wants_pointer_input()
@@ -214,20 +221,17 @@ impl<T> OpenGLApp<T> {
     fn poll_client_rect(&self, data: &mut AppData<T>) -> (u32, u32) {
         static INIT: std::sync::Once = std::sync::Once::new();
         INIT.call_once(|| {
-            data.client_rect = self.get_client_rect();
+            data.client_rect = self.get_client_rect(data.window);
         });
 
         data.client_rect
     }
 
     #[inline]
-    fn get_client_rect(&self) -> (u32, u32) {
+    fn get_client_rect(&self, window: HWND) -> (u32, u32) {
         let mut rect = RECT::default();
         unsafe {
-            GetClientRect(
-                *expect!(self.hwnd.get(), "You need to call init first"),
-                &mut rect,
-            );
+            let _ = GetClientRect(window, &mut rect);
         }
 
         (
