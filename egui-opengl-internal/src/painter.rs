@@ -2,7 +2,7 @@ use crate::shader;
 use egui::{
     emath::Rect,
     epaint::{Mesh, Primitive},
-    Color32, TextureFilter,
+    TextureFilter,
 };
 use gl::types::*;
 use std::ffi::{c_void, CString};
@@ -56,16 +56,6 @@ impl UserTexture {
         }
 
         self.dirty = true;
-    }
-
-    pub fn from_raw(id: u32) -> Self {
-        Self {
-            size: (0, 0),
-            gl_texture_id: Some(id),
-            filtering: TextureFilter::Linear,
-            dirty: false,
-            pixels: Vec::with_capacity(0),
-        }
     }
 
     pub fn delete(&self) {
@@ -207,49 +197,6 @@ impl Painter {
         unsafe {
             gl::Disable(gl::FRAMEBUFFER_SRGB);
         }
-    }
-
-    pub fn new_opengl_texture(&mut self, openl_id: u32) -> egui::TextureId {
-        let id = egui::TextureId::User(self.textures.len() as u64);
-
-        self.textures.insert(id, UserTexture::from_raw(openl_id));
-
-        id
-    }
-
-    pub fn new_user_texture(
-        &mut self,
-        size: (usize, usize),
-        srgba_pixels: &[Color32],
-        filtering: TextureFilter,
-    ) -> egui::TextureId {
-        assert_eq!(size.0 * size.1, srgba_pixels.len());
-
-        let pixels: Vec<u8> = srgba_pixels.iter().flat_map(|a| a.to_array()).collect();
-        let id = egui::TextureId::User(self.textures.len() as u64);
-
-        self.textures.insert(
-            id,
-            UserTexture {
-                size,
-                pixels,
-                gl_texture_id: None,
-                filtering,
-                dirty: true,
-            },
-        );
-
-        id
-    }
-
-    pub fn update_user_texture_data(&mut self, texture_id: &egui::TextureId, pixels: &[Color32]) {
-        let texture = self
-            .textures
-            .get_mut(texture_id)
-            .expect("Texture with id has not been created");
-
-        texture.pixels = pixels.iter().flat_map(|a| a.to_array()).collect();
-        texture.dirty = true;
     }
 
     fn paint_mesh(

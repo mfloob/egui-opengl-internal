@@ -69,7 +69,7 @@ impl<T> OpenGLApp<T> {
                 panic_msg!("You must call init only once");
             }
 
-            if window.0 == -1 {
+            if window.is_invalid() {
                 panic_msg!("Invalid output window descriptor");
             }
 
