@@ -1,5 +1,5 @@
 use clipboard::{windows_clipboard::WindowsClipboardContext, ClipboardProvider};
-use egui::{Event, Key, Modifiers, PointerButton, Pos2, RawInput, Rect, Vec2, Context};
+use egui::{Event, Key, Modifiers, PointerButton, Pos2, RawInput, Rect, Vec2, Context, MouseWheelUnit};
 use windows::Wdk::System::SystemInformation::NtQuerySystemTime;
 use windows::Win32::{
     Foundation::{HWND, RECT},
@@ -173,7 +173,7 @@ impl InputCollector {
                 }
                 InputResult::Character
             }
-            WM_MOUSEWHEEL => {
+            WM_MOUSEHWHEEL | WM_MOUSEWHEEL => {
                 self.alter_modifiers(get_mouse_modifiers(wparam));
 
                 let delta = (wparam >> 16) as i16 as f32 * 10. / WHEEL_DELTA as f32;
@@ -183,21 +183,7 @@ impl InputCollector {
                         .push(Event::Zoom(if delta > 0. { 1.5 } else { 0.5 }));
                     InputResult::Zoom
                 } else {
-                    self.events.push(Event::Scroll(Vec2::new(0., delta)));
-                    InputResult::Scroll
-                }
-            }
-            WM_MOUSEHWHEEL => {
-                self.alter_modifiers(get_mouse_modifiers(wparam));
-
-                let delta = (wparam >> 16) as i16 as f32 * 10. / WHEEL_DELTA as f32;
-
-                if wparam & MK_CONTROL.0 as usize != 0 {
-                    self.events
-                        .push(Event::Zoom(if delta > 0. { 1.5 } else { 0.5 }));
-                    InputResult::Zoom
-                } else {
-                    self.events.push(Event::Scroll(Vec2::new(delta, 0.)));
+                    self.events.push(Event::MouseWheel { delta: Vec2::new(0., delta), modifiers: get_mouse_modifiers(wparam), unit: MouseWheelUnit::Line });
                     InputResult::Scroll
                 }
             }
@@ -268,6 +254,7 @@ impl InputCollector {
             focused: true,
             viewport_id: ctx.viewport_id(),
             viewports: ctx.input(|i| i.raw.viewports.clone()),
+            system_theme: None
         }
     }
 

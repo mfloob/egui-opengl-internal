@@ -1,5 +1,5 @@
 use std::ffi::CString;
-
+use std::ptr::null_mut;
 use windows::{
     core::PCSTR,
     Win32::{
@@ -40,7 +40,7 @@ pub fn get_module(module_name: &str) -> HMODULE {
             module
         } else {
             // this also shouldn't silently error
-            HMODULE(0)
+            HMODULE(null_mut())
         }
     }
 }
