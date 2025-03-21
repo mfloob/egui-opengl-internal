@@ -398,9 +398,8 @@ impl Painter {
                             "Mismatch between texture size and texel count"
                         );
 
-                        let gamma = 1.0;
                         let data: Vec<u8> = image
-                            .srgba_pixels(Some(gamma))
+                            .srgba_pixels(None)
                             .flat_map(|a| a.to_array())
                             .collect();
 
@@ -436,9 +435,8 @@ impl Painter {
                         "Mismatch between texture size and texel count"
                     );
 
-                    let gamma = 1.0;
                     let pixels = image
-                        .srgba_pixels(Some(gamma))
+                        .srgba_pixels(None)
                         .flat_map(|a| a.to_array())
                         .collect();
 
